@@ -65,6 +65,7 @@ class WhaleContainer(db.Model):
     status = db.Column(db.Integer, default=1)
     uuid = db.Column(db.String(256))
     port = db.Column(db.Integer, nullable=True, default=0)
+    docker_id = db.Column(db.String(128), nullable=True)
     flag = db.Column(db.String(128), nullable=False)
 
     # Relationships
