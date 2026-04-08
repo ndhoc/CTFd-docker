@@ -1,6 +1,6 @@
 FROM python:3.11-slim-bookworm AS build
 
-RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/*
+# Đã xóa dòng đổi mirror apt sang Tsinghua
 
 WORKDIR /opt/CTFd
 
@@ -22,18 +22,19 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 COPY . /opt/CTFd
 
-RUN pip install --upgrade pip -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple --use-pep517 --no-cache-dir \
-    && pip install --no-cache-dir -r requirements.txt -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple --use-pep517 --no-cache-dir \
+# Đã xóa cờ -i https://mirrors.tuna.tsinghua.edu.cn... trong các lệnh pip
+RUN pip install --upgrade pip --use-pep517 --no-cache-dir \
+    && pip install --no-cache-dir -r requirements.txt --use-pep517 --no-cache-dir \
     && for d in CTFd/plugins/*; do \
         if [ -f "$d/requirements.txt" ]; then \
-            pip install --no-cache-dir -r "$d/requirements.txt" -i https://mirrors.tuna.tsinghua.edu.cn/pypi/web/simple --use-pep517 --no-cache-dir;\
+            pip install --no-cache-dir -r "$d/requirements.txt" --use-pep517 --no-cache-dir;\
         fi; \
     done;
 
 
-FROM python:3.11-slim-bookworm as release
+FROM python:3.11-slim-bookworm AS release
 
-RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/*
+# Đã xóa dòng đổi mirror apt sang Tsinghua
 
 WORKDIR /opt/CTFd
 
