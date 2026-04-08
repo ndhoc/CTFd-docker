@@ -95,6 +95,8 @@ class DynamicValueDockerChallenge(BaseChallenge):
         super().solve(user, team, challenge, request)
 
         if challenge.dynamic_score == 1:
+            if not hasattr(challenge, 'function'):
+                challenge.function = 'logarithmic'
             DynamicValueChallenge.calculate_value(challenge)
 
         db.session.commit()
