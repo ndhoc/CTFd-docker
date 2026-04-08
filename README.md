@@ -1,55 +1,221 @@
-# CTFd-docker
-可以快速使用Docker一键配置CTFd
+# CTFd-docker (Forked & Fully Fixed)
 
-此版本的CTFd集合Whale插件，用以部署动态容器挑战
+[![Docker](https://img.shields.io/badge/Docker-✓-blue)](https://www.docker.com/)
+[![CTFd](https://img.shields.io/badge/CTFd-3.7.4-brightgreen)](https://github.com/CTFd/CTFd)
+[![Whale](https://img.shields.io/badge/Whale-✓-orange)](https://github.com/frankli0324/ctfd-whale)
 
-[CTFd-docker配置参考](https://blog.hz2016.com/2022/03/%e3%80%90ctfd%e3%80%91%e9%9d%b6%e5%9c%ba%e5%ae%89%e8%a3%85%e4%b8%8e%e9%85%8d%e7%bd%ae%ef%bc%88docker%e4%b8%80%e9%94%ae%e9%85%8d%e7%bd%ae%e7%89%88%ef%bc%89/)
+This repository provides a **one-command installation** for CTFd with integrated **Whale/Owl** plugins, enabling **dynamic container challenges** using Docker Swarm.
 
-## 快速安装
+It is a fork of [huangzheng2016/CTFd-docker](https://github.com/huangzheng2016/CTFd-docker) with **critical fixes** to make the system production-ready.
 
-在Ubuntu20.04、Ubuntu22.04、Kali 23.3、macOS 14.2+orbStack下完成过测试
+---
 
-你需要修改docker-compose.yml中的CTFD_URL、DIRECT_URL、DYNAMIC_URL，并在DNS服务器上做解析
+## ✨ What's Fixed / Improved (This Fork)
 
->如果你要在本机进行测试，你可以使用如下host设置
+- ✅ **Removed Tsinghua mirrors** – Uses default PyPI and Debian mirrors for global reliability.
+- ✅ **Fixed frpc network** – Added `containers` overlay network to frpc, eliminating `lookup ... server misbehaving` errors.
+- ✅ **Dynamic flags fully working** – Added `docker_id` field to `WhaleContainer` and fixed challenge type methods.
+- ✅ **Container creation logic** – Implemented actual Docker container creation inside Whale's `register()` method.
+- ✅ **Custom 404 page** – Replaced frps default 404 with a friendly "container starting" page.
+- ✅ **Removed update nag** – Deleted the "New CTFd version available" banner from admin panel.
+- ✅ **Fixed scoring bug** – Handled missing `function` attribute in dynamic challenges.
 
-```
-127.0.0.1 ctfd.test.com
-127.0.0.1 direct.test.com
-127.0.0.1 dynamic.test.com
-```
+---
 
-脚本第一次执行时会自动初始化配置，初始化后将无法自动修改，你需要手动根据sed.sh脚本修改相应的值或后台配置
+## 🚀 One-Command Installation
 
-```
-sudo apt install git -y
-git clone https://github.com/huangzheng2016/CTFd-docker CTFd
-vi CTFd/docker-compose.yml
-#修改CTFD_URL、DIRECT_URL、DYNAMIC_URL，并在DNS服务器上做解析
-sudo sh CTFd/install.sh
-```
+Run the following command on a fresh **Ubuntu 20.04 / 22.04** server:
 
-虽然还是建议大家自己安装，别直接脚本，以免出现配置不正确
-
-请在root权限下执行
-
-```
-apt-get update
-apt-get install git docker docker-compose -y
-#如果docker安装失败
-#apt-get install git docker.io docker-compose -y
-git clone https://github.com/huangzheng2016/CTFd-docker CTFd
-docker swarm init --advertise-addr 127.0.0.1
-docker node update --label-add='name=linux-1' $(docker node ls -q)
-docker-compose -f CTFd/docker-compose.yml up -d
+```bash
+curl -fsSL https://raw.githubusercontent.com/ndhoc/CTFd-docker/main/install.sh | bash
 ```
 
-## 更新日志
+The script will automatically:
 
-2024.1.19
->修改默认主题为core
->
->core-beta主题暂不支持（等官方beta版搞完再做适配）
+- Update system packages  
+- Install Docker & Docker Compose  
+- Clone this repository into `/opt/CTFd`  
+- Initialize Docker Swarm  
+- Create required overlay network `ctfd_containers`  
+- Build the CTFd image (without Tsinghua mirrors)  
+- Start all services  
+- Initialize the database  
 
-2024.11.3
-> Merge CTFd/Master(3.7.4) to CTFd-docker/3.7.4
+After completion, open your browser and navigate to:
+
+```
+http://<your-server-ip>
+```
+
+---
+
+## ⚙️ Configuration (Before Running)
+
+If you want to use a custom domain or change security tokens, edit the following files:
+
+### `docker-compose.yml`
+
+```yaml
+services:
+  ctfd:
+    environment:
+      - CTFD_URL=https://ctf.yourdomain.com
+      - DIRECT_URL=https://direct.yourdomain.com
+      - DYNAMIC_URL=https://dynamic.yourdomain.com
+```
+
+### `frps/frps.ini`
+
+```ini
+[common]
+bind_addr = 0.0.0.0
+bind_port = 7000
+token = your_secure_token_here
+subdomain_host = dynamic.yourdomain.com
+vhost_http_port = 8009
+custom_404_page = /etc/frp/404.html
+```
+
+### `frpc/frpc.ini`
+
+```ini
+[common]
+token = your_secure_token_here
+server_addr = frps
+server_port = 7000
+admin_addr = 0.0.0.0
+admin_port = 7400
+```
+
+---
+
+## ⚠️ Security Warning
+
+This repository may contain real tokens and passwords.  
+Do **NOT** make it public unless you replace sensitive values.
+
+---
+
+## 📁 Directory Structure
+
+```text
+.
+├── CTFd/
+├── conf/nginx/
+├── frpc/
+├── frps/
+├── .data/
+├── docker-compose.yml
+├── Dockerfile
+├── install.sh
+└── README.md
+```
+
+---
+
+## 🐳 Services
+
+| Service | Image | Description |
+|--------|------|-------------|
+| ctfd | Built from Dockerfile | Main CTFd application with Whale/Owl plugins |
+| nginx | nginx:stable | Reverse proxy |
+| db | mariadb:10.11 | Database |
+| cache | redis:4 | Cache |
+| frpc | snowdreamtech/frpc:0.41.0 | FRP client |
+| frps | snowdreamtech/frps:0.41.0 | FRP server |
+
+---
+
+## 🔧 Whale Plugin Configuration (Admin Panel)
+
+After logging in as admin → **Admin Panel → Whale**
+
+| Field | Value |
+|------|------|
+| Docker API URL | unix:///var/run/docker.sock |
+| FRP Admin Addr | frpc |
+| FRP Admin Port | 7400 |
+| FRP Server Address | frps |
+| FRP Server Port | 7000 |
+| FRP Auth Token | same as in frps.ini |
+| Http Domain Suffix | dynamic.yourdomain.com |
+| Http Port | 80 |
+
+---
+
+## 🌐 DNS Setup
+
+Point these domains to your server:
+
+- `ctf.yourdomain.com`
+- `direct.yourdomain.com`
+- `*.dynamic.yourdomain.com`
+
+**Cloudflare users:** set to **DNS only (gray cloud)**.
+
+---
+
+## 🔥 Firewall
+
+```bash
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw allow 10001:10200/tcp
+ufw enable
+```
+
+---
+
+## 🧪 Creating a Dynamic Docker Challenge
+
+1. Build image:
+```bash
+docker build -t web-demo:latest .
+```
+
+2. In CTFd:
+- Type: `dynamic_docker_whale`
+- Docker Image: `web-demo:latest`
+- FRP Type: HTTP (Port 80)
+- Leave Flag empty
+
+3. Container must read `FLAG` env variable (e.g. `/flag.txt`)
+
+---
+
+## 📝 Troubleshooting
+
+- **frpc error** → Check network `ctfd_containers`
+- **No container created** → Check Docker socket mount
+- **404 error** → Check wildcard DNS
+- **Flag incorrect bug** → Reload page
+
+---
+
+## Optional: Custom JS (Correct Popup)
+
+```javascript
+CTFd._internal.challenge.submit = async function(pre, post) {
+    const result = await pre();
+    if (result.data.status === 'correct') {
+        alert('✅ Correct! You solved the challenge.');
+    } else if (result.data.status === 'incorrect') {
+        alert('❌ Incorrect flag.');
+    }
+    return post(result);
+};
+```
+
+---
+
+## 🙏 Credits
+
+- Original: https://github.com/huangzheng2016/CTFd-docker  
+- CTFd: https://github.com/CTFd/CTFd  
+- Whale: https://github.com/frankli0324/ctfd-whale  
+
+---
+
+## 📄 License
+
+Same as original repository.
