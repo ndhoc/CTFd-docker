@@ -16,9 +16,9 @@ services:
       - ACCESS_LOG=-
       - ERROR_LOG=-
       - REVERSE_PROXY=true
-      - CTFD_URL=ctfd.test.com
-      - DIRECT_URL=direct.test.com
-      - DYNAMIC_URL=dynamic.test.com
+      - CTFD_URL=ctf.hoc.id.vn
+      - DIRECT_URL=direct.hoc.id.vn
+      - DYNAMIC_URL=dynamic.hoc.id.vn
     volumes:
       - .data/CTFd/logs:/var/log/CTFd
       - .data/CTFd/uploads:/var/uploads
