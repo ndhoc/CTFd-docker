@@ -92,36 +92,96 @@ class FrpRouter(BaseRouter):
             host = get_config("whale:frp_http_domain_suffix", "")
             port = get_config("whale:frp_http_port", "80")
             host += f':{port}' if port != 80 else ''
-            return f'<a target="_blank" href="http://{container.http_subdomain}.{host}/">题目链接</a>'
+            return f'<a target="_blank" href="http://{container.http_subdomain}.{host}/">Open Challenge</a>'
         return ''
 
     def register(self, container: WhaleContainer):
+        from CTFd.utils import get_config
+        import docker
+
+        # --- Tạo container Docker thực tế ---
+        client = docker.DockerClient(base_url=get_config("whale:docker_api_url", "unix:///var/run/docker.sock"))
+        image = container.challenge.docker_image
+        name = f"whale_{container.user_id}_{container.challenge_id}_{container.uuid[:8]}"
+        network = get_config("whale:docker_network", "ctfd_containers")
+        mem_limit = container.challenge.memory_limit or "128m"
+        cpu_limit = container.challenge.cpu_limit or 0.5
+
+        try:
+            real_container = client.containers.run(
+                image=image,
+                name=name,
+                network=network,
+                mem_limit=mem_limit,
+                nano_cpus=int(float(cpu_limit) * 1e9),
+                detach=True,
+                remove=False,
+            )
+            container.docker_id = real_container.id
+            db.session.commit()
+            current_app.logger.info(f"[Whale] Container created: {real_container.id}")
+        except Exception as e:
+            current_app.logger.error(f"[Whale] Docker error: {e}")
+            return False, f'Docker error: {e}'
+
+        # --- Xử lý port và FRP (giữ nguyên) ---
         if container.challenge.redirect_type == 'direct':
             if not container.port:
                 port = CacheProvider(app=current_app).get_available_port()
                 if not port:
+                    # Rollback: xóa container vừa tạo
+                    try:
+                        client.containers.get(container.docker_id).remove(force=True)
+                    except:
+                        pass
                     return False, 'No available ports. Please wait for a few minutes.'
                 container.port = port
                 db.session.commit()
         elif container.challenge.redirect_type == 'http':
-            # config['subdomain'] = container.http_subdomain
             pass
-        self.reload()
-        return True, 'success'
 
+        # --- Cập nhật FRP ---
+        try:
+            self.reload()
+        except Exception as e:
+            # Nếu reload FRP thất bại, hủy container
+            try:
+                client.containers.get(container.docker_id).remove(force=True)
+            except:
+                pass
+            return False, f'FRP reload failed: {e}'
+
+        return True, 'success'
+    
     def unregister(self, container: WhaleContainer):
-        if container.challenge.redirect_type == 'direct':
+        from CTFd.utils import get_config
+        import docker
+
+        # --- Xóa container Docker thực tế ---
+        client = docker.DockerClient(base_url=get_config("whale:docker_api_url", "unix:///var/run/docker.sock"))
+        if container.docker_id:
+            try:
+                real_container = client.containers.get(container.docker_id)
+                real_container.remove(force=True)
+                current_app.logger.info(f"[Whale] Container removed: {container.docker_id}")
+            except Exception as e:
+                current_app.logger.warning(f"[Whale] Could not remove container: {e}")
+
+        # --- Trả lại port cho pool (nếu là direct) ---
+        if container.challenge.redirect_type == 'direct' and container.port:
             try:
                 redis_util = CacheProvider(app=current_app)
                 redis_util.add_available_port(container.port)
             except Exception as e:
-                logging.log(
-                    'whale', 'Error deleting port from cache',
-                    name=container.user.name,
-                    challenge_id=container.challenge_id,
-                )
-                return False, 'Error deleting port from cache'
-        self.reload()
+                current_app.logger.warning(f"[Whale] Could not return port {container.port}: {e}")
+
+        # --- Cập nhật lại FRP ---
+        try:
+            self.reload()
+        except Exception as e:
+            current_app.logger.error(f"[Whale] FRP reload failed during unregister: {e}")
+            return False, f'FRP reload failed: {e}'
+
         return True, 'success'
 
     def check_availability(self):
