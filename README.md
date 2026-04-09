@@ -27,7 +27,7 @@ It is a fork of [huangzheng2016/CTFd-docker](https://github.com/huangzheng2016/C
 Run the following command on a fresh **Ubuntu 20.04 / 22.04** server:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/ndhoc/CTFd-docker/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ndhoc/CTFd-docker/refs/heads/3.7.4/install.sh | bash
 ```
 
 The script will automatically:
