@@ -1,0 +1,76 @@
+#score-graph {
+  min-height: 320px;
+}
+
+.scoreboard-graph-wrap {
+  width: 100%;
+}
+
+.scoreboard-graph-title {
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #1f2d3d;
+  margin-bottom: 0.5rem;
+}
+
+.scoreboard-graph-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.scoreboard-graph-label {
+  font-size: 11px;
+  fill: #64748b;
+}
+
+#scoreboard-place-text {
+  color: #6c757d;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+#scoreboard-tabs .nav-link {
+  color: #1f6fe5;
+}
+
+#scoreboard-tabs .nav-link.active {
+  color: #1f2d3d;
+  font-weight: 600;
+}
+
+.scoreboard-table th,
+.scoreboard-table td {
+  vertical-align: middle;
+}
+
+.scoreboard-table tbody td:nth-child(1) {
+  width: 84px;
+  font-weight: 700;
+}
+
+#scoreboard-pagination .page-link {
+  color: #1f6fe5;
+  background: #fff;
+  border: 1px solid #1f6fe5;
+  min-width: 44px;
+  text-align: center;
+}
+
+#scoreboard-pagination .page-item.active .page-link {
+  background-color: #1f6fe5;
+  border-color: #1f6fe5;
+  color: #fff;
+}
+
+#scoreboard-pagination .page-item:not(.active):not(.disabled) .page-link:hover {
+  background: #e9f2ff;
+}
+
+#scoreboard-pagination .page-item.disabled .page-link,
+#scoreboard-pagination .page-link.scoreboard-page-disabled {
+  color: #94b8ef;
+  border-color: #b8d1f6;
+  background: #fff;
+}

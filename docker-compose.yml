@@ -1,4 +1,3 @@
-version: '3.7'
 services:
   ctfd:
     build: .
@@ -16,9 +15,9 @@ services:
       - ACCESS_LOG=-
       - ERROR_LOG=-
       - REVERSE_PROXY=true
-      - CTFD_URL=ctf.yourdomain.com
-      - DIRECT_URL=direct.yourdomain.com
-      - DYNAMIC_URL=dynamic.yourdomain.com
+      - CTFD_URL=ctf.jil.io.vn
+      - DIRECT_URL=direct.jil.io.vn
+      - DYNAMIC_URL=dynamic.jil.io.vn
     volumes:
       - .data/CTFd/logs:/var/log/CTFd
       - .data/CTFd/uploads:/var/uploads
@@ -36,8 +35,10 @@ services:
     restart: always
     volumes:
       - ./conf/nginx/http.conf:/etc/nginx/nginx.conf
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     ports:
       - 80:80
+      - 443:443
     depends_on:
       - ctfd
       - frps
@@ -76,8 +77,11 @@ services:
       - ./frpc:/etc/frp/
     networks:
       frp:
+        priority: 1000
       internal:
+        priority: 900
       containers:
+        priority: 800
 
   frps:
     image: snowdreamtech/frps:0.41.0
@@ -92,12 +96,12 @@ services:
       default:
 
 networks:
-    default:
-    internal:
-        internal: true
-    frp:
-        internal: true
-    containers:
-        internal: true
-        driver: overlay
-        attachable: true
+  default:
+  internal:
+    internal: true
+  frp:
+    internal: true
+  containers:
+    internal: true
+    driver: overlay
+    attachable: true

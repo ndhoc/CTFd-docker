@@ -10,11 +10,11 @@ def setup_default_configs():
         ['docker_max_container_count', '100'],
         ['docker_max_renew_count', '5'],
         ['docker_timeout', '3600'],
-        ['frp_direct_ip_address', 'direct.test.com'],
+        ['frp_direct_ip_address', 'direct.jil.io.vn'],
         ['frp_direct_port_maximum', '10200'],
         ['frp_direct_port_minimum', '10101'],
-        ['frp_http_domain_suffix', 'dynamic.test.com'],
+        ['frp_http_domain_suffix', 'dynamic.jil.io.vn'],
         ['frpc_config_template',
-         '[common]\r\ntoken = YOUR_TOKEN\r\nserver_addr = frps\r\nserver_port = 7000\r\nadmin_addr = 0.0.0.0\r\nadmin_port = 7400']
+         '[common]\r\ntoken = 03f2c6bb-8a14-4103-9dd8-d1fb14428954\r\nserver_addr = frps\r\nserver_port = 7000\r\nadmin_addr = 0.0.0.0\r\nadmin_port = 7400']
     ]
     DBUtils.save_all_configs(config)

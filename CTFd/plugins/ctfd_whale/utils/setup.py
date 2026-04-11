@@ -19,13 +19,13 @@ def setup_default_configs():
         'docker_auto_connect_containers': 'ctfd-frpc-1',
         'frp_api_url': 'http://frpc:7400',
         'frp_http_port': '80',
-        'frp_http_domain_suffix': 'dynamic.test.com',
-        'frp_direct_ip_address': 'direct.test.com',
+        'frp_http_domain_suffix': 'dynamic.jil.io.vn',
+        'frp_direct_ip_address': 'direct.jil.io.vn',
         'frp_direct_port_maximum': '10100',
         'frp_direct_port_minimum': '10001',
         'template_http_subdomain': '{{ container.uuid }}',
         'template_chall_flag': '{{ "flag{"+uuid.uuid4()|string+"}" }}',
-        'frp_config_template': '[common]\r\ntoken = YOUR_TOKEN\r\nserver_addr = frps\r\nserver_port = 7000\r\nadmin_addr = 0.0.0.0\r\nadmin_port = 7400'
+        'frp_config_template': '[common]\r\ntoken = 03f2c6bb-8a14-4103-9dd8-d1fb14428954\r\nserver_addr = frps\r\nserver_port = 7000\r\nadmin_addr = 0.0.0.0\r\nadmin_port = 7400'
     }.items():
         set_config('whale:' + key, val)
     db.session.add(WhaleRedirectTemplate(

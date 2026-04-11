@@ -14,6 +14,10 @@ dayjs.extend(relativeTime);
 CTFd._internal.challenge = {};
 let challenges = [];
 let solves = [];
+const CHALLENGES_PER_PAGE = 28;
+let currentPage = 1;
+let selectedCategory = "all";
+let filteredChallenges = [];
 
 const loadChal = id => {
   const chal = $.grep(challenges, chal => chal.id == id)[0];
@@ -278,94 +282,208 @@ function getSolves(id) {
 
 function loadChals() {
   return CTFd.api.get_challenge_list().then(function(response) {
-    const categories = [];
-    const $challenges_board = $("#challenges-board");
     challenges = response.data;
 
     if (window.BETA_sortChallenges) {
       challenges = window.BETA_sortChallenges(challenges);
     }
 
-    $challenges_board.empty();
-
-    for (let i = challenges.length - 1; i >= 0; i--) {
-      if ($.inArray(challenges[i].category, categories) == -1) {
-        const category = challenges[i].category;
-        categories.push(category);
-
-        const categoryid = category.replace(/ /g, "-").hashCode();
-        const categoryrow = $(
-          "" +
-            '<div id="{0}-row" class="pt-5">'.format(categoryid) +
-            '<div class="category-header col-md-12 mb-3">' +
-            "</div>" +
-            '<div class="category-challenges col-md-12">' +
-            '<div class="challenges-row col-md-12"></div>' +
-            "</div>" +
-            "</div>"
-        );
-        categoryrow
-          .find(".category-header")
-          .append($("<h3>" + category + "</h3>"));
-
-        $challenges_board.append(categoryrow);
-      }
-    }
-
-    for (let i = 0; i <= challenges.length - 1; i++) {
-      const chalinfo = challenges[i];
-      const chalid = chalinfo.name.replace(/ /g, "-").hashCode();
-      const catid = chalinfo.category.replace(/ /g, "-").hashCode();
-      const chalwrap = $(
-        "<div id='{0}' class='col-md-3 d-inline-block'></div>".format(chalid)
-      );
-      let chalbutton;
-
-      if (solves.indexOf(chalinfo.id) == -1) {
-        chalbutton = $(
-          "<button class='btn btn-dark challenge-button w-100 text-truncate pt-3 pb-3 mb-2' value='{0}'></button>".format(
-            chalinfo.id
-          )
-        );
-      } else {
-        chalbutton = $(
-          "<button class='btn btn-dark challenge-button solved-challenge w-100 text-truncate pt-3 pb-3 mb-2' value='{0}'><i class='fas fa-check corner-button-check'></i></button>".format(
-            chalinfo.id
-          )
-        );
-      }
-
-      const chalheader = $("<p>{0}</p>".format(chalinfo.name));
-      const chalscore = $("<span>{0}</span>".format(chalinfo.value));
-      for (let j = 0; j < chalinfo.tags.length; j++) {
-        const tag = "tag-" + chalinfo.tags[j].value.replace(/ /g, "-");
-        chalwrap.addClass(tag);
-      }
-
-      chalbutton.append(chalheader);
-      chalbutton.append(chalscore);
-      chalwrap.append(chalbutton);
-
-      $("#" + catid + "-row")
-        .find(".category-challenges > .challenges-row")
-        .append(chalwrap);
-    }
-
-    $(".challenge-button").click(function(_event) {
-      loadChal(this.value);
-    });
-  });
-}
-
-function update() {
-  return loadChals().then(markSolves);
-}
-
-$(() => {
-  update().then(() => {
     if (window.location.hash.length > 0) {
       loadChalByName(decodeURIComponent(window.location.hash.substring(1)));
     }
+
+    renderBoard();
+
+    $("#challenge-loading").addClass("d-none");
+    $("#challenges-board").removeClass("d-none");
+  });
+}
+
+function normalizeValue(value) {
+  if (!value) {
+    return "";
+  }
+  return String(value).toLowerCase();
+}
+
+function getCategories() {
+  const unique = [];
+  challenges.forEach(challenge => {
+    if ($.inArray(challenge.category, unique) === -1) {
+      unique.push(challenge.category);
+    }
+  });
+  return unique;
+}
+
+function getSearchFieldValue(challenge, field) {
+  if (field === "description") {
+    return normalizeValue(challenge.description);
+  }
+  if (field === "tag") {
+    return normalizeValue(
+      (challenge.tags || [])
+        .map(tag => tag.value)
+        .join(" ")
+    );
+  }
+  return normalizeValue(challenge.name);
+}
+
+function applyFilters() {
+  const field = $("#challenge-search-field").val() || "name";
+  const query = normalizeValue($("#challenge-search-input").val().trim());
+
+  filteredChallenges = challenges.filter(challenge => {
+    if (selectedCategory !== "all" && challenge.category !== selectedCategory) {
+      return false;
+    }
+
+    if (!query) {
+      return true;
+    }
+
+    return getSearchFieldValue(challenge, field).indexOf(query) !== -1;
+  });
+
+  const maxPage = Math.max(1, Math.ceil(filteredChallenges.length / CHALLENGES_PER_PAGE));
+  if (currentPage > maxPage) {
+    currentPage = maxPage;
+  }
+}
+
+function renderCategories() {
+  const $categories = $("#challenge-categories");
+  $categories.empty();
+
+  const allClass = selectedCategory === "all" ? "active" : "";
+  $categories.append(
+    $(
+      "<button class='nav-link challenge-category-item " + allClass + "' data-category='all'>All</button>"
+    )
+  );
+
+  getCategories().forEach(category => {
+    const activeClass = selectedCategory === category ? "active" : "";
+    const button = $(
+      "<button class='nav-link challenge-category-item " +
+        activeClass +
+        "' data-category='" +
+        htmlEntities(category) +
+        "'></button>"
+    );
+    button.text(category);
+    $categories.append(button);
+  });
+}
+
+function renderChallenges() {
+  const $grid = $("#challenge-grid");
+  const $empty = $("#challenge-empty");
+  $grid.empty();
+
+  if (!filteredChallenges.length) {
+    $empty.removeClass("d-none");
+    return;
+  }
+
+  $empty.addClass("d-none");
+
+  const start = (currentPage - 1) * CHALLENGES_PER_PAGE;
+  const pageChallenges = filteredChallenges.slice(start, start + CHALLENGES_PER_PAGE);
+
+  pageChallenges.forEach(challenge => {
+    const solved = challenge.solved_by_me || solves.indexOf(challenge.id) !== -1;
+    const classes = solved
+      ? "btn btn-dark challenge-button challenge-tile solved-challenge w-100"
+      : "btn btn-dark challenge-button challenge-tile w-100";
+
+    const wrapper = $("<div class='col-6 col-md-4 col-lg-3 mb-3'></div>");
+    const button = $(
+      "<button class='" + classes + "' value='" + challenge.id + "'></button>"
+    );
+
+    if (solved) {
+      button.append("<i class='fas fa-check corner-button-check'></i>");
+    }
+
+    button.append(
+      $(
+        "<div class='challenge-tile-inner'><p class='challenge-title mb-2'></p><span class='challenge-value'></span></div>"
+      )
+    );
+    button.find(".challenge-title").text(challenge.name);
+    button.find(".challenge-value").text(challenge.value);
+
+    wrapper.append(button);
+    $grid.append(wrapper);
+  });
+
+  $(".challenge-button").off("click").on("click", function(_event) {
+    loadChal(this.value);
+  });
+}
+
+function renderPagination() {
+  const $pagination = $("#challenge-pagination");
+  $pagination.empty();
+
+  const pageCount = Math.ceil(filteredChallenges.length / CHALLENGES_PER_PAGE);
+  if (pageCount <= 1) {
+    return;
+  }
+
+  for (let page = 1; page <= pageCount; page++) {
+    const active = page === currentPage ? " active" : "";
+    const item = $(
+      "<li class='page-item" + active + "'><button class='page-link challenge-page' data-page='" + page + "'>" + page + "</button></li>"
+    );
+    $pagination.append(item);
+  }
+}
+
+function renderBoard() {
+  applyFilters();
+  renderCategories();
+  renderChallenges();
+  renderPagination();
+}
+
+function update() {
+  return loadChals();
+}
+
+$(() => {
+  $("#challenges-board").addClass("d-none");
+  update();
+
+  $("#challenge-search-button").on("click", function() {
+    currentPage = 1;
+    renderBoard();
+  });
+
+  $("#challenge-search-input").on("keyup", function(event) {
+    if (event.keyCode === 13) {
+      currentPage = 1;
+      renderBoard();
+    }
+  });
+
+  $("#challenge-search-field").on("change", function() {
+    currentPage = 1;
+    renderBoard();
+  });
+
+  $(document).on("click", ".challenge-category-item", function() {
+    selectedCategory = $(this).data("category") || "all";
+    currentPage = 1;
+    renderBoard();
+  });
+
+  $(document).on("click", ".challenge-page", function() {
+    currentPage = parseInt($(this).data("page"), 10) || 1;
+    renderChallenges();
+    renderPagination();
   });
 
   $("#challenge-input").keyup(function(event) {
