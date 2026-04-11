@@ -1,4 +1,4 @@
-# CTFd-docker (Forked & Fully Fixed)
+# CTFd-docker
 
 [![Docker](https://img.shields.io/badge/Docker-✓-blue)](https://www.docker.com/)
 [![CTFd](https://img.shields.io/badge/CTFd-3.7.4-brightgreen)](https://github.com/CTFd/CTFd)
