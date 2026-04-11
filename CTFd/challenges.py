@@ -116,6 +116,7 @@ def new_challenges():
         )
         .filter_by(state="visible")
         .order_by(Challenges.id.desc())
+        .limit(10)
         .all()
     )
 
