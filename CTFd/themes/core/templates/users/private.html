@@ -6,7 +6,7 @@
 {% block content %}
 	<div class="jumbotron">
 		<div class="container">
-			<h1>{{ user.name }}</h1>
+			<h1 id="user-id" user-id="{{ user.id }}">{{ user.name }}</h1>
 
 			{% if user.team_id %}
 				<h2>
@@ -45,16 +45,21 @@
 				</h3>
 			{% endfor %}
 
-			<div>
-				<h2 class="text-center">
+			<div class="user-info">
+				<h2 id="user-place" class="text-center">
 					{% if account.place %}
-						{{ account.place }} <small>place</small>
+						{{ account.place }}
+						<small>place</small>
 					{% endif %}
 				</h2>
-				<h2 class="text-center">
+				<h2 id="user-score" class="text-center">
 					{% if account %}
-						{{ account.score }} <small>points</small>
+						{{ account.score }}
+						<small>points</small>
 					{% endif %}
+				</h2>
+				<h2 id="user-profile-id" class="text-center">
+					User ID: {{ user.id }}
 				</h2>
 			</div>
 
