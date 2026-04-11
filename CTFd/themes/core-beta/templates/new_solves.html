@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block stylesheets %}
+  {{ super() }}
+  <style>
+    .new-board-link {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .new-board-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>{% trans %}New Solves{% endtrans %}</h1>
+  </div>
+</div>
+
+<div class="container">
+  {% include "components/errors.html" %}
+
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <td class="text-center"><b>{% trans %}Index{% endtrans %}</b></td>
+              <td class="text-center"><b>ID</b></td>
+              <td class="text-center"><b>{% trans %}User{% endtrans %}</b></td>
+              <td class="text-center"><b>{% trans %}Challenge{% endtrans %}</b></td>
+              <td class="text-center"><b>{% trans %}Time{% endtrans %}</b></td>
+            </tr>
+          </thead>
+          <tbody>
+            {% for solve in solve_rows %}
+            <tr>
+              <td class="text-center">{{ solve.index }}</td>
+              <td class="text-center">{{ solve.id }}</td>
+              <td class="text-center">
+                {% if solve.user_id %}
+                  <a class="new-board-link" href="/users/{{ solve.user_id }}">{{ solve.user }}</a>
+                {% else %}
+                  {{ solve.user }}
+                {% endif %}
+              </td>
+              <td class="text-center">
+                <a class="new-board-link" href="/challenges?search_field=name&search={{ solve.challenge | urlencode }}#challenge-search-input">{{ solve.challenge }}</a>
+              </td>
+              <td class="text-center">{{ solve.time_ago }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5" class="text-center text-muted">{% trans %}No solves found.{% endtrans %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% if total_pages > 1 %}
+  <div class="row mt-3 mb-4">
+    <div class="col-md-12">
+      <nav aria-label="New solves pagination">
+        <ul class="pagination justify-content-center mb-0">
+          <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('challenges.new_solves', page=1) }}">{% trans %}First{% endtrans %}</a>
+          </li>
+          <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('challenges.new_solves', page=page - 1) }}">{% trans %}Previous{% endtrans %}</a>
+          </li>
+
+          {% for p in range(page_start, page_end + 1) %}
+          <li class="page-item {% if p == page %}active{% endif %}">
+            <a class="page-link" href="{{ url_for('challenges.new_solves', page=p) }}">{{ p }}</a>
+          </li>
+          {% endfor %}
+
+          <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('challenges.new_solves', page=page + 1) }}">{% trans %}Next{% endtrans %}</a>
+          </li>
+          <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+            <a class="page-link" href="{{ url_for('challenges.new_solves', page=total_pages) }}">{% trans %}Last{% endtrans %}</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

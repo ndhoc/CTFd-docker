@@ -75,6 +75,36 @@
 {% endblock %}
 
 {% block scripts %}
+<script>
+	document.addEventListener("DOMContentLoaded", function () {
+		var params = new URLSearchParams(window.location.search || "");
+		var searchValue = (params.get("search") || "").trim();
+		if (!searchValue) {
+			return;
+		}
+
+		var fieldValue = (params.get("search_field") || "name").trim();
+		var field = document.getElementById("challenge-search-field");
+		var input = document.getElementById("challenge-search-input");
+		var button = document.getElementById("challenge-search-button");
+		if (!field || !input || !button) {
+			return;
+		}
+
+		field.value = fieldValue;
+		input.value = searchValue;
+
+		var toolbar = document.querySelector(".challenge-toolbar");
+		if (toolbar) {
+			toolbar.scrollIntoView({ behavior: "smooth", block: "center" });
+		}
+
+		setTimeout(function () {
+			input.focus();
+			button.click();
+		}, 120);
+	});
+</script>
 {% endblock %}
 
 {% block entrypoint %}

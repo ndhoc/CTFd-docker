@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block stylesheets %}
+  {{ super() }}
+  <style>
+    .new-board-link {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .new-board-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+  <div class="container">
+    <h1>{% trans %}New Challenges{% endtrans %}</h1>
+  </div>
+</div>
+
+<div class="container">
+  {% include "components/errors.html" %}
+
+  <div class="row mt-4">
+    <div class="col-md-12">
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <td class="text-center"><b>ID</b></td>
+              <td class="text-center"><b>{% trans %}Challenge Name{% endtrans %}</b></td>
+              <td class="text-center"><b>{% trans %}Category{% endtrans %}</b></td>
+            </tr>
+          </thead>
+          <tbody>
+            {% for challenge in challenge_rows %}
+            <tr>
+              <td class="text-center">{{ challenge.id }}</td>
+              <td class="text-center">
+                <a class="new-board-link" href="/challenges?search_field=name&search={{ challenge.name | urlencode }}#challenge-search-input">{{ challenge.name }}</a>
+              </td>
+              <td class="text-center">{{ challenge.category or '-' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="3" class="text-center text-muted">{% trans %}No challenges found.{% endtrans %}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -36,8 +36,13 @@
                     </li>
                 {% endif %}
 
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ url_for('challenges.listing') }}">Challenges</a>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="challenges-menu" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Challenges</a>
+                    <div class="dropdown-menu" aria-labelledby="challenges-menu">
+                        <a class="dropdown-item" href="/challenges">Challenges</a>
+                        <a class="dropdown-item" href="/challenges/new">New Challenges</a>
+                        <a class="dropdown-item" href="/challenges/new-solves">New Solves</a>
+                    </div>
                 </li>
             </ul>
 
