@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-DOMAIN_ROOT="jil.io.vn"
+DOMAIN_ROOT="${DOMAIN_ROOT:-jil.io.vn}"
+CTFD_DIR="${CTFD_DIR:-/opt/CTFd}"
 CF_INI="/root/.secrets/certbot/cloudflare.ini"
 
 if [[ -z "${CF_DNS_API_TOKEN:-}" ]]; then
@@ -25,7 +26,7 @@ certbot certonly \
   -d "$DOMAIN_ROOT" \
   -d "*.$DOMAIN_ROOT"
 
-cd /opt/CTFd
+cd "$CTFD_DIR"
 docker compose up -d nginx
 docker compose exec -T nginx nginx -t
 docker compose exec -T nginx nginx -s reload

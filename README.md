@@ -47,6 +47,107 @@ After completion, open your browser and navigate to:
 http://<your-server-ip>
 ```
 
+## ⚡ Fully Automated VPS Bootstrap (Recommended)
+
+For rebuilding on a brand-new VPS with domain/token wiring and optional wildcard SSL:
+
+```bash
+sudo bash /opt/CTFd/scripts/bootstrap_vps.sh \
+  --domain-root yourdomain.com \
+  --frp-token your_secure_token \
+  --issue-ssl \
+  --cf-token <cloudflare_dns_api_token>
+```
+
+What it automates:
+
+- Install Docker + Docker Compose + certbot dependencies
+- Clone/update repo and checkout target branch
+- Configure domain values in compose/nginx/frp/plugin defaults
+- Initialize Docker Swarm + overlay network `ctfd_containers`
+- Build and start stack
+- Run database migration
+- (Optional) Issue wildcard SSL and install auto-renew cron
+
+You can view full options with:
+
+```bash
+sudo bash /opt/CTFd/scripts/bootstrap_vps.sh --help
+```
+
+## 🗂 Automation Files (Per File Guide)
+
+This project keeps automation split by responsibility (instead of one giant script), so each file is easier to maintain and debug.
+
+### 1) [scripts/bootstrap_vps.sh](scripts/bootstrap_vps.sh)
+
+Use this for full fresh install/reinstall on a new VPS.
+
+What it does:
+
+- Installs Docker + Compose + certbot dependencies
+- Clones/updates repository and checks out target branch
+- Applies domain/token values into compose/nginx/frp/plugin defaults
+- Initializes Docker Swarm and overlay network `ctfd_containers`
+- Builds and starts stack
+- Runs database migration
+- Optionally issues wildcard SSL and configures auto-renew cron
+
+Run:
+
+```bash
+sudo bash /opt/CTFd/scripts/bootstrap_vps.sh \
+  --domain-root yourdomain.com \
+  --frp-token your_secure_token \
+  --issue-ssl \
+  --cf-token <cloudflare_dns_api_token>
+```
+
+### 2) [scripts/issue_wildcard_cert.sh](scripts/issue_wildcard_cert.sh)
+
+Use this only when you need to issue/re-issue wildcard cert manually.
+
+Inputs:
+
+- `CF_DNS_API_TOKEN` (required)
+- `DOMAIN_ROOT` (optional, default: `jil.io.vn`)
+- `CTFD_DIR` (optional, default: `/opt/CTFd`)
+
+Run:
+
+```bash
+CF_DNS_API_TOKEN=<token> DOMAIN_ROOT=yourdomain.com CTFD_DIR=/opt/CTFd \
+  sudo -E bash /opt/CTFd/scripts/issue_wildcard_cert.sh
+```
+
+### 3) [scripts/certbot_renew_reload.sh](scripts/certbot_renew_reload.sh)
+
+Use this for manual renew check or via cron.
+
+Run:
+
+```bash
+sudo bash /opt/CTFd/scripts/certbot_renew_reload.sh
+```
+
+### 4) [install.sh](install.sh)
+
+Legacy one-command installer (quick setup). For production and repeatable rebuilds, prefer [scripts/bootstrap_vps.sh](scripts/bootstrap_vps.sh).
+
+Run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ndhoc/CTFd-docker/refs/heads/3.7.4/install.sh | bash
+```
+
+### Recommended workflow for a brand-new VPS
+
+1. Point DNS records first: `ctf`, `direct`, `*.dynamic`.
+2. Run [scripts/bootstrap_vps.sh](scripts/bootstrap_vps.sh).
+3. Open CTFd setup page and finish initial admin wizard.
+4. Verify Whale config in admin panel.
+5. Test one dynamic challenge launch/destroy cycle.
+
 ---
 
 ## ⚙️ Configuration (Before Running)
