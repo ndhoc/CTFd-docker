@@ -48,6 +48,44 @@
 	<script defer src="{{ url_for('views.themes', path='js/vendor.bundle.js') }}"></script>
 	<script defer src="{{ url_for('views.themes', path='js/core.js') }}"></script>
 	<script defer src="{{ url_for('views.themes', path='js/helpers.js') }}"></script>
+	<script>
+		document.addEventListener("DOMContentLoaded", function () {
+			var toggle = document.getElementById("challenges-menu");
+			if (!toggle) {
+				return;
+			}
+
+			var parent = toggle.closest(".dropdown");
+			var menu = parent ? parent.querySelector(".dropdown-menu") : null;
+
+			toggle.addEventListener("click", function (event) {
+				event.preventDefault();
+				event.stopPropagation();
+
+				if (window.jQuery && window.jQuery.fn && window.jQuery.fn.dropdown) {
+					window.jQuery(toggle).dropdown("toggle");
+					return;
+				}
+
+				if (!parent || !menu) {
+					return;
+				}
+				parent.classList.toggle("show");
+				menu.classList.toggle("show");
+			});
+
+			document.addEventListener("click", function (event) {
+				if (!parent || !menu) {
+					return;
+				}
+				if (parent.contains(event.target)) {
+					return;
+				}
+				parent.classList.remove("show");
+				menu.classList.remove("show");
+			});
+		});
+	</script>
 
 	{% block entrypoint %}
 	<script defer src="{{ url_for('views.themes', path='js/pages/main.js') }}"></script>
